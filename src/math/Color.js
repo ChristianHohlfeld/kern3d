@@ -1,12 +1,11 @@
 import { clamp } from "./MathUtils.js";
 
 export class Color {
-  constructor(r = 1, g = 1, b = 1) {
-    this.r = 1;
-    this.g = 1;
-    this.b = 1;
-    if (typeof r === "number" && g === undefined) this.setHex(r);
-    else this.setRGB(r, g, b);
+  constructor(r = 0xffffff, g, b) {
+    // Defaults must not fill g/b before the hex check. A default of 1 made
+    // Color(0xe85d4c) store the raw hex in r and clamp the frame to pink.
+    if (g === undefined && b === undefined) this.setHex(r);
+    else this.setRGB(r, g, b === undefined ? r : b);
   }
 
   setRGB(r, g, b) {

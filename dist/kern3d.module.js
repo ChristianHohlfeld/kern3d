@@ -7,12 +7,9 @@ function clamp(v, min, max) {
 
 // src/math/Color.js
 var Color = class {
-  constructor(r = 1, g = 1, b = 1) {
-    this.r = 1;
-    this.g = 1;
-    this.b = 1;
-    if (typeof r === "number" && g === void 0) this.setHex(r);
-    else this.setRGB(r, g, b);
+  constructor(r = 16777215, g, b) {
+    if (g === void 0 && b === void 0) this.setHex(r);
+    else this.setRGB(r, g, b === void 0 ? r : b);
   }
   setRGB(r, g, b) {
     this.r = r;
@@ -1606,7 +1603,7 @@ function hexToRgb(hex) {
 }
 
 // src/Kern.js
-var REVISION = "0.1.2-core";
+var REVISION = "0.1.3-core";
 export {
   AmbientLight,
   BoxGeometry,
