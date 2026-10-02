@@ -11,7 +11,7 @@
   <script type="importmap">
   {
     "imports": {
-      "kern3d": "https://cdn.jsdelivr.net/gh/ChristianHohlfeld/kern3d@0.1.0/dist/kern3d.module.js"
+      "kern3d": "https://cdn.jsdelivr.net/gh/ChristianHohlfeld/kern3d@0.1.1/dist/kern3d.module.js"
     }
   }
   </script>
@@ -29,8 +29,8 @@
     const camera = new THREE.PerspectiveCamera(50, innerWidth / innerHeight, 0.1, 100);
     camera.position.set(3, 2, 5);
 
-    scene.add(new THREE.AmbientLight(0xffffff, 0.25));
-    const sun = new THREE.DirectionalLight(0xffffff, 1);
+    scene.add(new THREE.AmbientLight(0xffffff, 0.35));
+    const sun = new THREE.DirectionalLight(0xffffff, 0.85);
     sun.position.set(4, 8, 2);
     scene.add(sun);
 

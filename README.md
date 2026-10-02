@@ -2,7 +2,7 @@
 
 Minimaler 3D-Kern für den Browser. Die öffentliche API folgt dem Three.js-Subset (`Scene`, `PerspectiveCamera`, `Mesh`, `WebGLRenderer`, …). Der Code ist eine eigene Implementierung, kein Fork von Three.js, keine Abhängigkeiten.
 
-Revision `0.1.0`. Einbinden wie Three.js, über jsDelivr.
+Revision `0.1.1`. Einbinden wie Three.js, über jsDelivr.
 
 ## CDN, ES-Module
 
@@ -10,7 +10,7 @@ Revision `0.1.0`. Einbinden wie Three.js, über jsDelivr.
 <script type="importmap">
 {
   "imports": {
-    "kern3d": "https://cdn.jsdelivr.net/gh/ChristianHohlfeld/kern3d@0.1.0/dist/kern3d.module.js"
+    "kern3d": "https://cdn.jsdelivr.net/gh/ChristianHohlfeld/kern3d@0.1.1/dist/kern3d.module.js"
   }
 }
 </script>
@@ -43,13 +43,13 @@ Revision `0.1.0`. Einbinden wie Three.js, über jsDelivr.
 Direkt, ohne Import-Map:
 
 ```js
-import * as THREE from "https://cdn.jsdelivr.net/gh/ChristianHohlfeld/kern3d@0.1.0/dist/kern3d.module.js";
+import * as THREE from "https://cdn.jsdelivr.net/gh/ChristianHohlfeld/kern3d@0.1.1/dist/kern3d.module.js";
 ```
 
 ## CDN, Script-Tag
 
 ```html
-<script src="https://cdn.jsdelivr.net/gh/ChristianHohlfeld/kern3d@0.1.0/dist/kern3d.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/ChristianHohlfeld/kern3d@0.1.1/dist/kern3d.js"></script>
 <script>
   const scene = new KERN.Scene();
   const camera = new KERN.PerspectiveCamera(50, innerWidth / innerHeight, 0.1, 100);
@@ -57,7 +57,7 @@ import * as THREE from "https://cdn.jsdelivr.net/gh/ChristianHohlfeld/kern3d@0.1
 </script>
 ```
 
-`@main` zeigt immer auf den letzten Stand, `@0.1.0` ist fest. jsDelivr braucht nach dem ersten Push kurz, bis der Link live ist.
+`@main` zeigt immer auf den letzten Stand, `@0.1.1` ist fest. jsDelivr braucht nach dem ersten Push kurz, bis der Link live ist.
 
 ## Lokal
 

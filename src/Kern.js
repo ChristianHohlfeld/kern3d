@@ -20,4 +20,4 @@ export { WebGLRenderer, Fog, Texture } from "./renderers/WebGLRenderer.js";
 export { OrbitControls } from "./controls/OrbitControls.js";
 export { GridHelper } from "./helpers/GridHelper.js";
 
-export const REVISION = "0.1.0-core";
+export const REVISION = "0.1.1-core";

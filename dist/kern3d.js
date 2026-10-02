@@ -1158,7 +1158,10 @@ void main() {
     color = mix(fogColor, color, fogFactor);
   }
 
-  color = pow(max(color, 0.0), vec3(1.0 / 2.2));
+  // Reinhard keeps Phong highlights from clipping the whole frame to white.
+  color = max(color, 0.0);
+  color = color / (color + vec3(1.0));
+  color = pow(color, vec3(1.0 / 2.2));
   fragColor = vec4(color, opacity);
 }
 `;
@@ -1178,7 +1181,8 @@ uniform vec3 diffuseColor;
 uniform float opacity;
 out vec4 fragColor;
 void main() {
-  fragColor = vec4(pow(diffuseColor, vec3(1.0 / 2.2)), opacity);
+  vec3 lineColor = pow(max(diffuseColor, 0.0), vec3(1.0 / 2.2));
+  fragColor = vec4(lineColor, opacity);
 }
 `;
 
@@ -1658,6 +1662,6 @@ void main() {
   }
 
   // src/Kern.js
-  var REVISION = "0.1.0-core";
+  var REVISION = "0.1.1-core";
   return __toCommonJS(Kern_exports);
 })();
