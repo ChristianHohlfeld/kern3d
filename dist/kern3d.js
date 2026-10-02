@@ -250,17 +250,13 @@ var KERN = (() => {
     }
     setFromQuaternion(q, order = this.order) {
       this.order = order;
-      const { x, y, z, w } = q;
+      const x = q.x, y = q.y, z = q.z, w = q.w;
+      const sqx = x * x, sqy = y * y, sqz = z * z, sqw = w * w;
       if (order === "XYZ") {
-        const sinp = 2 * (w * y - z * x);
-        this.y = Math.abs(sinp) >= 1 ? Math.sign(sinp) * Math.PI / 2 : Math.asin(sinp);
-        if (Math.abs(sinp) < 0.999999) {
-          this.x = Math.atan2(2 * (w * x + y * z), 1 - 2 * (x * x + y * y));
-          this.z = Math.atan2(2 * (w * z + x * y), 1 - 2 * (y * y + z * z));
-        } else {
-          this.x = Math.atan2(2 * (w * x - y * z), 1 - 2 * (x * x + z * z));
-          this.z = 0;
-        }
+        this.x = Math.atan2(2 * (x * w - y * z), sqw - sqx - sqy + sqz);
+        const sinp = Math.min(1, Math.max(-1, 2 * (x * z + y * w)));
+        this.y = Math.asin(sinp);
+        this.z = Math.atan2(2 * (z * w - x * y), sqw + sqx - sqy - sqz);
       }
       return this;
     }
@@ -1523,7 +1519,7 @@ void main() {
       this.camera = camera;
       this.domElement = domElement;
       this.target = new Vector3();
-      this.enableDamping = false;
+      this.enableDamping = true;
       this.dampingFactor = 0.05;
       this.rotateSpeed = 1;
       this.panSpeed = 1;
@@ -1685,6 +1681,6 @@ void main() {
   }
 
   // src/Kern.js
-  var REVISION = "0.1.4-core";
+  var REVISION = "0.1.5-core";
   return __toCommonJS(Kern_exports);
 })();

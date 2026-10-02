@@ -3,14 +3,13 @@ import { Vector3 } from "../math/Vector3.js";
 const STATE = { NONE: -1, ROTATE: 0, DOLLY: 1, PAN: 2 };
 
 // Same gesture map as Three.js OrbitControls r128, which Voxel Shaper uses:
-// left drag orbits, right drag or shift-drag pans, wheel dollies. No damping
-// by default, so the camera follows the pointer instead of lagging behind it.
+// left drag orbits, right drag or shift-drag pans, wheel dollies. Damping on, same as Voxel Shaper.
 export class OrbitControls {
   constructor(camera, domElement) {
     this.camera = camera;
     this.domElement = domElement;
     this.target = new Vector3();
-    this.enableDamping = false;
+    this.enableDamping = true;
     this.dampingFactor = 0.05;
     this.rotateSpeed = 1;
     this.panSpeed = 1;
