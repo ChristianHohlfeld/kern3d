@@ -103,9 +103,8 @@ void main() {
     color = mix(fogColor, color, fogFactor);
   }
 
-  // Reinhard keeps Phong highlights from clipping the whole frame to white.
-  color = max(color, 0.0);
-  color = color / (color + vec3(1.0));
+  // Exposure keeps mobile Phong from washing the frame to white/pink.
+  color = clamp(max(color, 0.0) * 0.42, 0.0, 1.0);
   color = pow(color, vec3(1.0 / 2.2));
   fragColor = vec4(color, opacity);
 }
