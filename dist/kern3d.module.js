@@ -193,6 +193,22 @@ var Euler = class {
     this.order = e.order;
     return this;
   }
+  setFromQuaternion(q, order = this.order) {
+    this.order = order;
+    const { x, y, z, w } = q;
+    if (order === "XYZ") {
+      const sinp = 2 * (w * y - z * x);
+      this.y = Math.abs(sinp) >= 1 ? Math.sign(sinp) * Math.PI / 2 : Math.asin(sinp);
+      if (Math.abs(sinp) < 0.999999) {
+        this.x = Math.atan2(2 * (w * x + y * z), 1 - 2 * (x * x + y * y));
+        this.z = Math.atan2(2 * (w * z + x * y), 1 - 2 * (y * y + z * z));
+      } else {
+        this.x = Math.atan2(2 * (w * x - y * z), 1 - 2 * (x * x + z * z));
+        this.z = 0;
+      }
+    }
+    return this;
+  }
 };
 
 // src/math/Quaternion.js
@@ -592,18 +608,7 @@ var Object3D = class {
     _eye.setFromMatrixPosition(this.matrix);
     this.matrix.lookAt(_eye, target, this.up);
     this.quaternion.setFromRotationMatrix(this.matrix);
-    this._eulerFromQuaternion();
-  }
-  _eulerFromQuaternion() {
-    const q = this.quaternion;
-    const sinr = 2 * (q.w * q.x + q.y * q.z);
-    const cosr = 1 - 2 * (q.x * q.x + q.y * q.y);
-    this.rotation.x = Math.atan2(sinr, cosr);
-    const sinp = 2 * (q.w * q.y - q.z * q.x);
-    this.rotation.y = Math.abs(sinp) >= 1 ? Math.sign(sinp) * Math.PI / 2 : Math.asin(sinp);
-    const siny = 2 * (q.w * q.z + q.x * q.y);
-    const cosy = 1 - 2 * (q.y * q.y + q.z * q.z);
-    this.rotation.z = Math.atan2(siny, cosy);
+    this.rotation.setFromQuaternion(this.quaternion);
   }
 };
 var _target = new Vector3();
@@ -1463,56 +1468,53 @@ var OrbitControls = class {
     this.camera = camera;
     this.domElement = domElement;
     this.target = new Vector3();
-    this.enableDamping = true;
-    this.dampingFactor = 0.08;
+    this.enableDamping = false;
+    this.dampingFactor = 0.05;
+    this.rotateSpeed = 1;
+    this.panSpeed = 1;
+    this.zoomSpeed = 1;
     this.minDistance = 0.5;
     this.maxDistance = 200;
-    this.minPolar = 0.05;
-    this.maxPolar = Math.PI - 0.05;
+    this.minPolar = 0.01;
+    this.maxPolar = Math.PI - 0.01;
     this.enabled = true;
     this._spherical = { radius: 1, phi: 1, theta: 0 };
-    this._sphericalDelta = { radius: 1, phi: 0, theta: 0 };
+    this._delta = { radius: 0, phi: 0, theta: 0 };
     this._pan = new Vector3();
     this._state = STATE.NONE;
     this._pointer = { x: 0, y: 0 };
+    this._pointers = /* @__PURE__ */ new Map();
     this._scale = 1;
     this._offset = new Vector3();
+    this._panRight = new Vector3();
+    this._panUp = new Vector3();
     this._onPointerDown = (e) => this._pointerDown(e);
     this._onPointerMove = (e) => this._pointerMove(e);
-    this._onPointerUp = () => {
-      this._state = STATE.NONE;
-    };
+    this._onPointerUp = (e) => this._pointerUp(e);
     this._onWheel = (e) => this._wheel(e);
     this._onContext = (e) => e.preventDefault();
+    domElement.style.touchAction = "none";
     domElement.addEventListener("pointerdown", this._onPointerDown);
-    domElement.addEventListener("pointermove", this._onPointerMove);
-    domElement.addEventListener("pointerup", this._onPointerUp);
-    domElement.addEventListener("pointerleave", this._onPointerUp);
     domElement.addEventListener("wheel", this._onWheel, { passive: false });
     domElement.addEventListener("contextmenu", this._onContext);
+    window.addEventListener("pointermove", this._onPointerMove);
+    window.addEventListener("pointerup", this._onPointerUp);
+    window.addEventListener("pointercancel", this._onPointerUp);
     this.update();
   }
   update() {
     const offset = this._offset.copy(this.camera.position).sub(this.target);
     const spherical = this._spherical;
-    spherical.radius = offset.length();
+    spherical.radius = Math.max(offset.length(), 1e-6);
     spherical.theta = Math.atan2(offset.x, offset.z);
-    spherical.phi = Math.acos(Math.min(1, Math.max(-1, offset.y / (spherical.radius || 1))));
-    if (this.enableDamping) {
-      spherical.theta += this._sphericalDelta.theta * this.dampingFactor;
-      spherical.phi += this._sphericalDelta.phi * this.dampingFactor;
-      this._sphericalDelta.theta *= 1 - this.dampingFactor;
-      this._sphericalDelta.phi *= 1 - this.dampingFactor;
-      this.target.addScaledVector(this._pan, this.dampingFactor);
-      this._pan.multiplyScalar(1 - this.dampingFactor);
-    } else {
-      spherical.theta += this._sphericalDelta.theta;
-      spherical.phi += this._sphericalDelta.phi;
-      this._sphericalDelta.theta = 0;
-      this._sphericalDelta.phi = 0;
-      this.target.add(this._pan);
-      this._pan.set(0, 0, 0);
-    }
+    spherical.phi = Math.acos(Math.min(1, Math.max(-1, offset.y / spherical.radius)));
+    const damp = this.enableDamping ? this.dampingFactor : 1;
+    spherical.theta += this._delta.theta * damp;
+    spherical.phi += this._delta.phi * damp;
+    this._delta.theta *= 1 - damp;
+    this._delta.phi *= 1 - damp;
+    this.target.addScaledVector(this._pan, damp);
+    this._pan.multiplyScalar(1 - damp);
     spherical.radius = Math.max(this.minDistance, Math.min(this.maxDistance, spherical.radius * this._scale));
     this._scale = 1;
     spherical.phi = Math.max(this.minPolar, Math.min(this.maxPolar, spherical.phi));
@@ -1529,41 +1531,65 @@ var OrbitControls = class {
   dispose() {
     const el = this.domElement;
     el.removeEventListener("pointerdown", this._onPointerDown);
-    el.removeEventListener("pointermove", this._onPointerMove);
-    el.removeEventListener("pointerup", this._onPointerUp);
-    el.removeEventListener("pointerleave", this._onPointerUp);
     el.removeEventListener("wheel", this._onWheel);
     el.removeEventListener("contextmenu", this._onContext);
+    window.removeEventListener("pointermove", this._onPointerMove);
+    window.removeEventListener("pointerup", this._onPointerUp);
+    window.removeEventListener("pointercancel", this._onPointerUp);
   }
   _pointerDown(e) {
     if (!this.enabled) return;
+    this._pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
     this.domElement.setPointerCapture?.(e.pointerId);
     this._pointer.x = e.clientX;
     this._pointer.y = e.clientY;
-    this._state = e.button === 2 || e.shiftKey ? STATE.PAN : e.button === 1 ? STATE.DOLLY : STATE.ROTATE;
+    if (this._pointers.size >= 2) this._state = STATE.DOLLY;
+    else this._state = e.button === 2 || e.shiftKey || e.button === 1 ? STATE.PAN : STATE.ROTATE;
   }
   _pointerMove(e) {
-    if (!this.enabled || this._state === STATE.NONE) return;
-    const dx = e.clientX - this._pointer.x;
-    const dy = e.clientY - this._pointer.y;
-    this._pointer.x = e.clientX;
-    this._pointer.y = e.clientY;
+    if (!this.enabled || !this._pointers.has(e.pointerId)) return;
+    const prev = this._pointers.get(e.pointerId);
+    const dx = e.clientX - prev.x;
+    const dy = e.clientY - prev.y;
+    prev.x = e.clientX;
+    prev.y = e.clientY;
+    if (this._pointers.size >= 2) {
+      this._pinch();
+      return;
+    }
     if (this._state === STATE.ROTATE) {
-      const h = this.domElement.clientHeight || 1;
-      this._sphericalDelta.theta -= 2 * Math.PI * dx / h;
-      this._sphericalDelta.phi -= 2 * Math.PI * dy / h;
+      const h = this.domElement.clientHeight || window.innerHeight || 1;
+      this._delta.theta -= 2 * Math.PI * dx * this.rotateSpeed / h;
+      this._delta.phi -= 2 * Math.PI * dy * this.rotateSpeed / h;
     } else if (this._state === STATE.PAN) {
-      this._panOffset(dx, dy);
+      this._panBy(dx, dy);
     }
   }
-  _panOffset(dx, dy) {
+  _pointerUp(e) {
+    this._pointers.delete(e.pointerId);
+    if (this._pointers.size < 2) this._pinchDist = 0;
+    if (this._pointers.size === 0) this._state = STATE.NONE;
+    else this._state = STATE.DOLLY;
+  }
+  _pinch() {
+    const pts = [...this._pointers.values()];
+    if (pts.length < 2) return;
+    const dist = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
+    if (this._pinchDist) {
+      const ratio = this._pinchDist / Math.max(dist, 1);
+      this._scale *= ratio ** this.zoomSpeed;
+    }
+    this._pinchDist = dist;
+  }
+  _panBy(dx, dy) {
     const el = this.domElement;
     const targetDistance = this._offset.copy(this.camera.position).sub(this.target).length();
     const fov = (this.camera.fov || 50) * Math.PI / 180;
     const height = 2 * Math.tan(fov / 2) * targetDistance;
-    const factor = height / (el.clientHeight || 1);
+    const factor = height / (el.clientHeight || 1) * this.panSpeed;
     const x = -dx * factor;
     const y = dy * factor;
+    this.camera.updateMatrix();
     const te = this.camera.matrix.elements;
     this._pan.x += te[0] * x + te[4] * y;
     this._pan.y += te[1] * x + te[5] * y;
@@ -1572,7 +1598,8 @@ var OrbitControls = class {
   _wheel(e) {
     if (!this.enabled) return;
     e.preventDefault();
-    this._scale *= e.deltaY > 0 ? 1.08 : 0.92;
+    const delta = Math.sign(e.deltaY) * this.zoomSpeed;
+    this._scale *= delta > 0 ? 1.08 : 0.92;
   }
 };
 
@@ -1603,7 +1630,7 @@ function hexToRgb(hex) {
 }
 
 // src/Kern.js
-var REVISION = "0.1.3-core";
+var REVISION = "0.1.4-core";
 export {
   AmbientLight,
   BoxGeometry,

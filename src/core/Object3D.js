@@ -64,23 +64,9 @@ export class Object3D {
     _eye.setFromMatrixPosition(this.matrix);
     this.matrix.lookAt(_eye, target, this.up);
     this.quaternion.setFromRotationMatrix(this.matrix);
-    // Keep Euler in sync enough for subsequent updateMatrix() calls.
-    // Users who lookAt every frame should set matrixAutoUpdate = false
-    // or write quaternion only. We approximate Euler from the basis.
-    this._eulerFromQuaternion();
-  }
-
-  _eulerFromQuaternion() {
-    // XYZ extraction
-    const q = this.quaternion;
-    const sinr = 2 * (q.w * q.x + q.y * q.z);
-    const cosr = 1 - 2 * (q.x * q.x + q.y * q.y);
-    this.rotation.x = Math.atan2(sinr, cosr);
-    const sinp = 2 * (q.w * q.y - q.z * q.x);
-    this.rotation.y = Math.abs(sinp) >= 1 ? Math.sign(sinp) * Math.PI / 2 : Math.asin(sinp);
-    const siny = 2 * (q.w * q.z + q.x * q.y);
-    const cosy = 1 - 2 * (q.y * q.y + q.z * q.z);
-    this.rotation.z = Math.atan2(siny, cosy);
+    // updateMatrix() rebuilds the quaternion from Euler. The extraction has to
+    // round-trip or the next render throws away lookAt and the orbit drifts.
+    this.rotation.setFromQuaternion(this.quaternion);
   }
 }
 
