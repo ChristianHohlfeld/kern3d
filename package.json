@@ -1,0 +1,26 @@
+{
+  "name": "kern3d",
+  "version": "0.1.0",
+  "description": "Minimal browser 3D core with a Three.js-like API. No build step required to use the CDN build.",
+  "type": "module",
+  "main": "./dist/kern3d.js",
+  "module": "./dist/kern3d.module.js",
+  "exports": {
+    ".": {
+      "import": "./dist/kern3d.module.js",
+      "default": "./dist/kern3d.module.js"
+    }
+  },
+  "files": [
+    "dist",
+    "src",
+    "LICENSE",
+    "README.md"
+  ],
+  "license": "MIT",
+  "homepage": "https://github.com/ChristianHohlfeld/kern3d",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ChristianHohlfeld/kern3d.git"
+  }
+}
